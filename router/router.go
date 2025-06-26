@@ -9,7 +9,7 @@ import (
 	"github.com/walnuts1018/s3-oauth2-proxy/router/handler"
 )
 
-func NewRouter(cfg *config.AppConfig, authHandler *handler.AuthHandler, proxyHandler *handler.ProxyHandler) *echo.Echo {
+func NewRouter(cfg *config.AppConfig, authHandler *handler.AuthHandler, proxyHandler *handler.ProxyHandler, healthHandler *handler.HealthHandler) *echo.Echo {
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -18,6 +18,9 @@ func NewRouter(cfg *config.AppConfig, authHandler *handler.AuthHandler, proxyHan
 
 	e.GET("/auth/login", authHandler.Login)
 	e.GET("/auth/callback", authHandler.Callback)
+
+	e.GET("/livez", healthHandler.Liveness)
+	e.GET("/readyz", healthHandler.Readiness)
 
 	e.Any("/*", proxyHandler.GetObject)
 

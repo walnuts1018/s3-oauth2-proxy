@@ -65,8 +65,9 @@ func main() {
 	random := random.New()
 	authHandler := handler.NewAuthHandler(authUsecase, random)
 	proxyHandler := handler.NewProxyHandler(proxyUsecase)
+	healthHandler := handler.NewHealthHandler()
 
-	e := router.NewRouter(&cfg.App, authHandler, proxyHandler)
+	e := router.NewRouter(&cfg.App, authHandler, proxyHandler, healthHandler)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%s", cfg.App.Port),
