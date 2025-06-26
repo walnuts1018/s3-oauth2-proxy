@@ -1,0 +1,53 @@
+name: Go Tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: go mod download
+        run: go mod download
+
+      - name: Test
+        run: |
+          go test -cover ./... -coverprofile="cover.out"
+
+  lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v7
+
+  status-check:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    if: failure()
+    steps:
+      - run: exit 1
