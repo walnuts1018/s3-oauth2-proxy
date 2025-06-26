@@ -28,7 +28,9 @@ func (h *AuthHandler) Login(c echo.Context) error {
 
 	sess, _ := session.Get("session", c)
 	sess.Values["state"] = state
-	sess.Save(c.Request(), c.Response())
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 
 	return c.Redirect(http.StatusFound, h.authUsecase.GetAuthorizationURL(state))
 }
@@ -45,7 +47,9 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 	}
 
 	sess.Values["authenticated"] = true
-	sess.Save(c.Request(), c.Response())
+	if err := sess.Save(c.Request(), c.Response()); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
 
 	return c.Redirect(http.StatusFound, "/")
 }

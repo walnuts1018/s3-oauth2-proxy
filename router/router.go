@@ -5,8 +5,8 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/walnuts1018/s3-oauth2-proxy/router/handler"
 	"github.com/walnuts1018/s3-oauth2-proxy/config"
+	"github.com/walnuts1018/s3-oauth2-proxy/router/handler"
 )
 
 func NewRouter(cfg *config.AppConfig, authHandler *handler.AuthHandler, proxyHandler *handler.ProxyHandler) *echo.Echo {
