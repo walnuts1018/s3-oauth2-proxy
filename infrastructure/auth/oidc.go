@@ -56,8 +56,6 @@ func (r *authRepository) VerifyIDToken(ctx context.Context, token *oauth2.Token,
 		return "", errors.New("invalid nonce")
 	}
 
-	
-
 	var claims map[string]interface{}
 	if err := idToken.Claims(&claims); err != nil {
 		return "", err
