@@ -1,7 +1,7 @@
 name: Build Docker Image
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
 
 jobs:
   build:
@@ -78,8 +78,8 @@ jobs:
           username: walnuts1018
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get Tag from Release
-        run: echo "ImageTag=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      - name: Set Image Tag
+        run: echo "ImageTag=0.0.${{ github.run_number }}" >> $GITHUB_ENV
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
