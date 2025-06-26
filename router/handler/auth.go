@@ -1,36 +1,33 @@
 package handler
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"net/http"
 
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/walnuts1018/s3-oauth2-proxy/usecase"
+	"github.com/walnuts1018/s3-oauth2-proxy/util/random"
 )
 
 type AuthHandler struct {
 	authUsecase usecase.AuthUsecase
+	random      random.Random
 }
 
-func NewAuthHandler(authUsecase usecase.AuthUsecase) *AuthHandler {
-	return &AuthHandler{authUsecase: authUsecase}
+func NewAuthHandler(authUsecase usecase.AuthUsecase, random random.Random) *AuthHandler {
+	return &AuthHandler{authUsecase: authUsecase, random: random}
 }
 
 func (h *AuthHandler) Login(c echo.Context) error {
-	b := make([]byte, 32)
-	_, err := rand.Read(b)
+	state, err := h.random.SecureString(32, random.Alphanumeric)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
-	state := base64.StdEncoding.EncodeToString(b)
 
-	_, err = rand.Read(b)
+	nonce, err := h.random.SecureString(32, random.Alphanumeric)
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
-	nonce := base64.StdEncoding.EncodeToString(b)
 
 	sess, _ := session.Get("session", c)
 	sess.Values["state"] = state

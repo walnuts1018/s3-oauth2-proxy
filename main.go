@@ -19,6 +19,7 @@ import (
 	"github.com/walnuts1018/s3-oauth2-proxy/router/handler"
 	"github.com/walnuts1018/s3-oauth2-proxy/tracer"
 	"github.com/walnuts1018/s3-oauth2-proxy/usecase"
+	"github.com/walnuts1018/s3-oauth2-proxy/util/random"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws"
 )
 
@@ -61,7 +62,8 @@ func main() {
 	authUsecase := usecase.NewAuthUsecase(authRepo)
 	proxyUsecase := usecase.NewProxyUsecase(s3Repo)
 
-	authHandler := handler.NewAuthHandler(authUsecase)
+	random := random.New()
+	authHandler := handler.NewAuthHandler(authUsecase, random)
 	proxyHandler := handler.NewProxyHandler(proxyUsecase)
 
 	e := router.NewRouter(&cfg.App, authHandler, proxyHandler)
