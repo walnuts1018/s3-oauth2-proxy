@@ -32,15 +32,15 @@ func NewAuthRepository(cfg config.OIDCConfig) (repository.AuthRepository, error)
 	}, nil
 }
 
-func (r *authRepository) GetAuthorizationURL(state string) string {
-	return r.oauth2Config.AuthCodeURL(state)
+func (r *authRepository) GetAuthorizationURL(state, nonce string) string {
+	return r.oauth2Config.AuthCodeURL(state, oauth2.SetAuthURLParam("nonce", nonce))
 }
 
 func (r *authRepository) Exchange(ctx context.Context, code string) (*oauth2.Token, error) {
 	return r.oauth2Config.Exchange(ctx, code)
 }
 
-func (r *authRepository) VerifyIDToken(ctx context.Context, token *oauth2.Token) (string, error) {
+func (r *authRepository) VerifyIDToken(ctx context.Context, token *oauth2.Token, expectedNonce string) (string, error) {
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
 		return "", errors.New("id_token not found")
@@ -52,15 +52,24 @@ func (r *authRepository) VerifyIDToken(ctx context.Context, token *oauth2.Token)
 		return "", err
 	}
 
-	var claims struct {
-		Groups []string `json:"groups"`
+	if idToken.Nonce != expectedNonce {
+		return "", errors.New("invalid nonce")
 	}
+
+	
+
+	var claims map[string]interface{}
 	if err := idToken.Claims(&claims); err != nil {
 		return "", err
 	}
 
-	for _, group := range claims.Groups {
-		if group == r.cfg.AllowedGroup {
+	groupsClaim, ok := claims[r.cfg.GroupClaim].([]interface{})
+	if !ok {
+		return "", errors.New("group claim not found or not a list")
+	}
+
+	for _, group := range groupsClaim {
+		if groupStr, ok := group.(string); ok && groupStr == r.cfg.AllowedGroup {
 			return idToken.Subject, nil
 		}
 	}

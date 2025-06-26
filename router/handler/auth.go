@@ -26,13 +26,20 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	}
 	state := base64.StdEncoding.EncodeToString(b)
 
+	_, err = rand.Read(b)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
+	}
+	nonce := base64.StdEncoding.EncodeToString(b)
+
 	sess, _ := session.Get("session", c)
 	sess.Values["state"] = state
+	sess.Values["nonce"] = nonce
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.Redirect(http.StatusFound, h.authUsecase.GetAuthorizationURL(state))
+	return c.Redirect(http.StatusFound, h.authUsecase.GetAuthorizationURL(state, nonce))
 }
 
 func (h *AuthHandler) Callback(c echo.Context) error {
@@ -41,7 +48,12 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "invalid state")
 	}
 
-	_, err := h.authUsecase.Login(c.Request().Context(), c.QueryParam("code"))
+	expectedNonce, ok := sess.Values["nonce"].(string)
+	if !ok {
+		return c.String(http.StatusInternalServerError, "nonce not found in session")
+	}
+
+	_, err := h.authUsecase.Login(c.Request().Context(), c.QueryParam("code"), expectedNonce)
 	if err != nil {
 		return c.String(http.StatusForbidden, err.Error())
 	}
