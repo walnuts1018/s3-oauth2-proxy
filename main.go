@@ -57,7 +57,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	s3Repo := s3.NewS3Repository(awsCfg, cfg.S3.Bucket)
+	s3Repo := s3.NewS3Repository(awsCfg, cfg.S3)
 
 	authUsecase := usecase.NewAuthUsecase(authRepo)
 	proxyUsecase := usecase.NewProxyUsecase(s3Repo)
