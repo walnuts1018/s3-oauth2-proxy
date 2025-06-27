@@ -20,11 +20,7 @@ func NewProxyHandler(proxyUsecase usecase.ProxyUsecase) *ProxyHandler {
 }
 
 func (h *ProxyHandler) GetObject(c echo.Context) error {
-	authorized, err := isAuthenticated(c)
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "Internal server error")
-	}
-	if !authorized {
+	if !isAuthenticated(c) {
 		return c.Redirect(http.StatusFound, c.Echo().Reverse("auth.login"))
 	}
 
