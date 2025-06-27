@@ -3,8 +3,9 @@ package handler
 import (
 	"log/slog"
 	"net/http"
+	"path"
+	"strings"
 
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/walnuts1018/s3-oauth2-proxy/usecase"
 )
@@ -18,14 +19,17 @@ func NewProxyHandler(proxyUsecase usecase.ProxyUsecase) *ProxyHandler {
 }
 
 func (h *ProxyHandler) GetObject(c echo.Context) error {
-	sess, _ := session.Get("session", c)
-	if sess.Values["authenticated"] != true {
+	authorized, err := isAuthenticated(c)
+	if err != nil {
+		return c.String(http.StatusInternalServerError, "Internal server error")
+	}
+	if !authorized {
 		return c.Redirect(http.StatusFound, c.Echo().Reverse("auth.login"))
 	}
 
 	key := c.Request().URL.Path
-	if key == "/" {
-		key = "index.html"
+	if strings.HasSuffix(key, "/") {
+		key = path.Join(key, "index.html")
 	}
 
 	obj, err := h.proxyUsecase.GetObject(c.Request().Context(), key)
