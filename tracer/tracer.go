@@ -14,6 +14,8 @@ import (
 
 var Tracer = otel.Tracer("github.com/walnuts1018/s3-oauth2-proxy")
 
+const ServiceName = "s3-oauth2-proxy"
+
 func NewTracerProvider(ctx context.Context) (func(), error) {
 	exporter, err := otlptracegrpc.New(ctx)
 	if err != nil {
@@ -22,7 +24,7 @@ func NewTracerProvider(ctx context.Context) (func(), error) {
 
 	res := resource.NewWithAttributes(
 		semconv.SchemaURL,
-		semconv.ServiceName("s3-oauth2-proxy"),
+		semconv.ServiceName(ServiceName),
 	)
 
 	tp := sdktrace.NewTracerProvider(
