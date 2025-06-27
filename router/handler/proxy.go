@@ -20,7 +20,7 @@ func NewProxyHandler(proxyUsecase usecase.ProxyUsecase) *ProxyHandler {
 func (h *ProxyHandler) GetObject(c echo.Context) error {
 	sess, _ := session.Get("session", c)
 	if sess.Values["authenticated"] != true {
-		return c.Redirect(http.StatusFound, "/auth/login")
+		return c.Redirect(http.StatusFound, c.Echo().Reverse("auth.login"))
 	}
 
 	key := c.Request().URL.Path

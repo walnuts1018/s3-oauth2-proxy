@@ -23,11 +23,11 @@ func NewRouter(cfg *config.AppConfig, authHandler *handler.AuthHandler, proxyHan
 	)))
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(cfg.SessionSecret))))
 
-	e.GET("/auth/login", authHandler.Login)
-	e.GET("/auth/callback", authHandler.Callback)
+	e.GET("/auth/login", authHandler.Login).Name = "auth.login"
+	e.GET("/auth/callback", authHandler.Callback).Name = "auth.callback"
 
-	e.GET("/livez", healthHandler.Liveness)
-	e.GET("/readyz", healthHandler.Readiness)
+	e.GET("/livez", healthHandler.Liveness).Name = "health.liveness"
+	e.GET("/readyz", healthHandler.Readiness).Name = "health.readiness"
 
 	e.Any("/*", proxyHandler.GetObject)
 
