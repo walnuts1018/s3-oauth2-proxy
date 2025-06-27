@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	clientS3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/walnuts1018/s3-oauth2-proxy/config"
 	"github.com/walnuts1018/s3-oauth2-proxy/domain/model"
 	"github.com/walnuts1018/s3-oauth2-proxy/domain/repository"
 )
@@ -14,10 +15,12 @@ type s3Repository struct {
 	bucket string
 }
 
-func NewS3Repository(cfg aws.Config, bucket string) repository.S3Repository {
+func NewS3Repository(cfg aws.Config, s3Config config.S3Config) repository.S3Repository {
 	return &s3Repository{
-		client: clientS3.NewFromConfig(cfg),
-		bucket: bucket,
+		client: clientS3.NewFromConfig(cfg, func(o *clientS3.Options) {
+			o.UsePathStyle = s3Config.UsePathStyle
+		}),
+		bucket: s3Config.Bucket,
 	}
 }
 
