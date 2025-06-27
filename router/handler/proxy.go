@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo-contrib/session"
@@ -29,7 +30,8 @@ func (h *ProxyHandler) GetObject(c echo.Context) error {
 
 	obj, err := h.proxyUsecase.GetObject(c.Request().Context(), key)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		slog.ErrorContext(c.Request().Context(), "failed to get object", "key", key, "error", err)
+		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	return c.Stream(http.StatusOK, obj.ContentType, obj.Body)

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo-contrib/session"
@@ -21,19 +22,22 @@ func NewAuthHandler(authUsecase usecase.AuthUsecase, random random.Random) *Auth
 func (h *AuthHandler) Login(c echo.Context) error {
 	state, err := h.random.SecureString(32, random.Alphanumeric)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		slog.ErrorContext(c.Request().Context(), "failed to generate state", "error", err)
+		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	nonce, err := h.random.SecureString(32, random.Alphanumeric)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		slog.ErrorContext(c.Request().Context(), "failed to generate nonce", "error", err)
+		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	sess, _ := session.Get("session", c)
 	sess.Values["state"] = state
 	sess.Values["nonce"] = nonce
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		slog.ErrorContext(c.Request().Context(), "failed to save session", "error", err)
+		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	return c.Redirect(http.StatusFound, h.authUsecase.GetAuthorizationURL(state, nonce))
@@ -52,12 +56,14 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 
 	_, err := h.authUsecase.Login(c.Request().Context(), c.QueryParam("code"), expectedNonce)
 	if err != nil {
-		return c.String(http.StatusForbidden, err.Error())
+		slog.ErrorContext(c.Request().Context(), "failed to login", "error", err)
+		return c.String(http.StatusForbidden, "failed to login")
 	}
 
 	sess.Values["authenticated"] = true
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
-		return c.String(http.StatusInternalServerError, err.Error())
+		slog.ErrorContext(c.Request().Context(), "failed to save session", "error", err)
+		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
 	return c.Redirect(http.StatusFound, "/")
