@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"path"
@@ -34,6 +35,10 @@ func (h *ProxyHandler) GetObject(c echo.Context) error {
 
 	obj, err := h.proxyUsecase.GetObject(c.Request().Context(), key)
 	if err != nil {
+		if errors.Is(err, usecase.ErrObjectNotFound) {
+			slog.ErrorContext(c.Request().Context(), "object not found", "key", key)
+			return c.String(http.StatusNotFound, "Object not found")
+		}
 		slog.ErrorContext(c.Request().Context(), "failed to get object", "key", key, "error", err)
 		return c.String(http.StatusInternalServerError, "Internal server error")
 	}

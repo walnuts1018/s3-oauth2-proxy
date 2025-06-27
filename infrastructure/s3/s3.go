@@ -2,9 +2,11 @@ package s3
 
 import (
 	"context"
+	"errors"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	clientS3 "github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/walnuts1018/s3-oauth2-proxy/config"
 	"github.com/walnuts1018/s3-oauth2-proxy/domain/model"
 	"github.com/walnuts1018/s3-oauth2-proxy/domain/repository"
@@ -32,6 +34,10 @@ func (r *s3Repository) GetObject(ctx context.Context, key string) (*model.S3Obje
 
 	result, err := r.client.GetObject(ctx, input)
 	if err != nil {
+		var nsk *types.NoSuchKey
+		if errors.As(err, &nsk) {
+			return nil, repository.ErrObjectNotFound
+		}
 		return nil, err
 	}
 
