@@ -34,5 +34,8 @@ func (h *ProxyHandler) GetObject(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
+	c.Response().Header().Set("Cache-Control", "private")
+	c.Response().Header().Set("Pragma", "no-cache")
+
 	return c.Stream(http.StatusOK, obj.ContentType, obj.Body)
 }
