@@ -12,7 +12,11 @@ import (
 func NewRouter(cfg *config.AppConfig, authHandler *handler.AuthHandler, proxyHandler *handler.ProxyHandler, healthHandler *handler.HealthHandler) *echo.Echo {
 	e := echo.New()
 
-	e.Use(middleware.Logger())
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Skipper: func(c echo.Context) bool {
+			return c.Path() == "/livez" || c.Path() == "/readyz"
+		},
+	}))
 	e.Use(middleware.Recover())
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(cfg.SessionSecret))))
 
