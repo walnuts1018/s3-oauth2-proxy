@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=cache,target=/root/.cache/go-build,sharing=locked \
     GOOS=linux go build -o s3-oauth2-proxy -tags $BUILD_TAGS $ROOT && chmod +x ./s3-oauth2-proxy
 
-FROM debian:12.11-slim
+FROM debian:13.0-slim
 WORKDIR /app
 
 RUN --mount=type=cache,target=/var/lib/apt,sharing=locked \
