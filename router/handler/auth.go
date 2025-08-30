@@ -3,7 +3,9 @@ package handler
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/walnuts1018/s3-oauth2-proxy/usecase"
@@ -41,6 +43,12 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	sess, _ := session.Get("session", c)
 	sess.Values[sessionKeyState] = state
 	sess.Values[sessionKeyNonce] = nonce
+	sess.Options = &sessions.Options{
+		MaxAge:   int(1 * time.Hour.Seconds()),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		slog.ErrorContext(c.Request().Context(), "failed to save session", "error", err)
 		return c.String(http.StatusInternalServerError, "Internal server error")
@@ -67,6 +75,13 @@ func (h *AuthHandler) Callback(c echo.Context) error {
 	}
 
 	sess.Values[sessionKeyAuthenticated] = true
+	sess.Options = &sessions.Options{
+		MaxAge:   int(3 * 24 * time.Hour.Seconds()),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		slog.ErrorContext(c.Request().Context(), "failed to save session", "error", err)
 		return c.String(http.StatusInternalServerError, "Internal server error")
