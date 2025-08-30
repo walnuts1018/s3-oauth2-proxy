@@ -1,4 +1,4 @@
-FROM golang:1.24.6-bookworm AS builder
+FROM golang:1.25.0-bookworm AS builder
 ENV ROOT=/build
 ARG BUILD_TAGS=""
 RUN mkdir ${ROOT}
@@ -18,6 +18,7 @@ RUN --mount=type=cache,target=/go/pkg/mod/ \
 FROM debian:12.11-slim
 WORKDIR /app
 
+RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 RUN --mount=type=cache,target=/var/lib/apt,sharing=locked \
     --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get -y update && apt-get upgrade -y && apt-get install -y ca-certificates
