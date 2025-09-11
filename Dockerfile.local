@@ -1,0 +1,13 @@
+FROM golang:1.25.1-bookworm 
+
+ENV ROOT=/app
+WORKDIR ${ROOT}
+
+RUN --mount=type=bind,source=go.sum,target=go.sum \
+    --mount=type=bind,source=go.mod,target=go.mod \
+    go mod download -x
+
+COPY . .
+
+EXPOSE 8080
+CMD ["go", "tool", "air", "-c", ".air.toml"]

@@ -10,7 +10,7 @@ type OIDCConfig struct {
 	ClientID         string   `env:"OIDC_CLIENT_ID,required"`
 	ClientSecret     string   `env:"OIDC_CLIENT_SECRET,required"`
 	RedirectURL      string   `env:"OIDC_REDIRECT_URL,required"`
-	AllowedGroup     string   `env:"OIDC_ALLOWED_GROUPS,required"`
+	AllowedGroups    []string `env:"OIDC_ALLOWED_GROUPS"`
 	GroupClaim       string   `env:"OIDC_GROUP_CLAIM" envDefault:"groups"`
 	AdditionalScopes []string `env:"OIDC_ADDITIONAL_SCOPES" envDefault:""`
 }

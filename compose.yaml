@@ -1,0 +1,129 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+      args:
+        BUILD_TAGS: "debug"
+    ports:
+      - "8080:8080"
+    environment:
+      LOG_LEVEL: debug
+      LOG_TYPE: "text"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4317"
+      OTEL_EXPORTER_OTLP_INSECURE: "true"
+      SESSION_SECRET: "dummy-session-secret"
+      OIDC_ISSUER_URL: "https://authelia.local.walnuts.dev:9091"
+      OIDC_CLIENT_ID: "test_client_id"
+      OIDC_CLIENT_SECRET: "client_secret"
+      OIDC_REDIRECT_URL: "https://s3-oauth2-proxy.local.walnuts.dev/auth/callback"
+      OIDC_GROUP_CLAIM: "groups"
+      OIDC_ALLOWED_GROUPS: "viewer"
+      OIDC_ADDITIONAL_SCOPES: "groups"
+      S3_BUCKET: "test"
+      AWS_ENDPOINT_URL_S3: "http://minio:9000"
+      AWS_ACCESS_KEY_ID: "access_key"
+      AWS_SECRET_ACCESS_KEY: "secret_key"
+      AWS_REGION: "ap-northeast-1"
+      S3_USE_PATH_STYLE: "true"
+    depends_on:
+      authelia:
+        condition: service_started
+      minio:
+        condition: service_started
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /app/
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/livez"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.27.4
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - source: ./nginx
+        target: /etc/nginx/conf.d
+        type: bind
+        read_only: true
+      - source: ./certs
+        target: /etc/certs
+        type: bind
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      app:
+        condition: service_healthy
+      authelia:
+        condition: service_started
+    develop:
+      watch:
+        - action: restart
+          path: ./nginx
+
+  minio:
+    image: "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: "access_key"
+      MINIO_ROOT_PASSWORD: "secret_key"
+    volumes:
+      - source: minio_data
+        target: /data
+        type: volume
+    networks:
+      - default
+
+  authelia:
+    image: authelia/authelia:4.39.1
+    ports:
+      - "9091:9091"
+    volumes:
+      - ./authelia/config:/config:ro
+      - ./certs:/certs:ro
+      - authelia_data:/data
+    networks:
+      default:
+        aliases:
+          - authelia
+          - authelia.local.walnuts.dev
+    develop:
+      watch:
+        - action: restart
+          path: ./authelia
+
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.10.0
+    ports:
+      - "16686:16686" # Jaeger UI
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - default
+
+networks:
+  default: {}
+
+volumes:
+  minio_data:
+    driver: local
+  authelia_data:
+    driver: local

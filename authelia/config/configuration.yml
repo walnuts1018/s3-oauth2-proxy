@@ -1,0 +1,120 @@
+# From: https://github.com/authelia/authelia/blob/03e68ba412d86fb53b61f637c1384cf85d5e5bb1/config.template.yml
+
+server:
+  address: 'tcp://:9091/'
+  tls:
+    key: '/certs/authelia.local.walnuts.dev.key'
+    certificate: '/certs/authelia.local.walnuts.dev.crt'
+
+
+log:
+  level: 'debug'
+
+telemetry:
+  metrics:
+    enabled: false
+
+identity_validation:
+  reset_password:
+    jwt_secret: 'authelia_sandbox_secret'
+
+authentication_backend:
+  password_reset:
+    disable: false
+  file:
+    path: '/config/users_database.yaml'
+    watch: true
+    search:
+      email: false
+      case_insensitive: false
+    password:
+      algorithm: 'argon2'
+      argon2:
+        variant: 'argon2id'
+        iterations: 3
+        memory: 65536
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
+
+access_control:
+  default_policy: 'one_factor'
+
+session:
+  secret: 'authelia_sandbox_secret'
+  cookies:
+    - name: 'authelia_sandbox_session'
+      domain: 'authelia.local.walnuts.dev'
+      authelia_url: 'https://authelia.local.walnuts.dev:9091'
+  name: 'authelia_sandbox_session'
+  same_site: 'lax'
+  inactivity: '5m'
+  expiration: '1h'
+  remember_me: '1M'
+
+storage:
+  encryption_key: 'authelia_sandbox_encryption_key'
+  local:
+    path: '/data/db.sqlite3'
+
+notifier:
+  disable_startup_check: false
+  filesystem:
+    filename: '/data/notification.txt'
+
+identity_providers:
+  oidc:
+    hmac_secret: 'this_is_a_secret_abc123abc123abc'
+    jwks:
+      - key_id: 'authelia_sandbox'
+        algorithm: 'RS256'
+        use: 'sig'
+        key: |
+          -----BEGIN PRIVATE KEY-----
+          MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDY7VqSVrFFU0FA
+          JAZvcbQrVGklD1Lp5yxPtkVYhzrDkqc3IkseQfFUxozPkyrtRJnFbxHx8kT+CvXv
+          5qp9fTkdED5wSMsQg0i8yZVXV8f6RtSW3lO8MC88+eYR9lc/BVaHIOq9LpDl4dPc
+          eEz3HuiLhRZ3Yz2WZhm4pnf3NjCJJJ/Ny4rAEmnG+pvqP6AzAd6pUSHKjp4Y2oYV
+          zScKhhyYsWkGjDqD13rw25S8CiQDtDuU65RqGE/pCRqIXk2CIpJAC+38hButqIP/
+          0llBe4K1FWux42txLQsJDrEapsVJOiBrEEyzcR2FKAfLel2oXJBKzjRkSA72bKnQ
+          YC9UDzv9AgMBAAECggEABSMZ0f1blVizYuF3hYwbyCrnkokaXY+r7PdUDRSmv5rp
+          etTFEqJdJLTPANtrWNMXESXgNuqV165KxLOhtfcRMy7/S4ltxaZWQqJDdx4NDlA/
+          GJOLSBmcBMWmPSaoSkXGFs0gwfooVElUyxPOPsvsleFA9vLSso0YbtcCYEhYPeck
+          8DwvW0GnXG5kJCmdy2q11LB7T6B9Y2i2OnEDBThMWaSzXfs9558dezqoG1WUiDjQ
+          SJUVnJpL5su1JTqwEbrZZ4gGC5+A2UdOYHIcP8wy02tSLAuXSW3uCL/gJU5Q68YV
+          Pi7EOkbLIZuM7/FGsetFjd7uouJgb5vA2En3IU9fwQKBgQD+GFkZ4SdfupNjz2dQ
+          NQpmp7CXBGdul3X1epdAtJt+JM0IoGSVaZYRSWrwu4P0psauL+p82Wzia6nWbC1/
+          mCwhwz3uwGMnYcHnuPFNnb5NoXOrxEKJCFHiSlrpv+t90u6z5ithmag98+Q88D+s
+          Obog5SS1MI8h0/4Du60NumsnYwKBgQDajayR891pX+hxvtf9WO9Yb25lzsNjpVXH
+          gkODqIDK/5hVZmJipp+U0FMPOFQQDjDElkNei2gLqPulmuYIkRGiPTqaWD6RMs2Y
+          W+mCFngn8aDT05sOco1kWB6EhTZLE31miYLfDWj4ks1FAHjwPs4RhJeZS07PxrCN
+          qVl+wCfdHwKBgQDGRLVx7jBNEEbmAPZ6rYiaJYszq6oRr3nJvIi9YrBaM9kRPCaA
+          N81zW7hoc8k5Y9FwJc9w8C94Vc5GlE7EWzdEeRagb9pu5mbpq3QOvmG6LZsWkqPg
+          TW+nhaF+99SHb8n28kkzdTTEcsTLkCP+/WRxOpv0DhoBqWtx+kXEiowGRQKBgDCZ
+          /NxgLMa4K0rQM9wFIQS7kwNU3aKVK+Q4Fad7m1iJSmkDYbGqeCZxxWbHEfqYDURK
+          XiTyP2sIYx3KuokBKbi4gQW9xfwoHgxZtC3XrVTEqQ0yK3MlCkhcSD0UGqTLasGY
+          pt/PbZ6JlthXaI2UieLfZ48Rbi9KcgyuslY7iSHlAoGAGihIBJdB1YmILMWdLufk
+          FA5REbjziV/a8kDmqsxLFvyshCOYXWNFUYaJbBlxikZWqbeLK6f49VNEhQzfYJeY
+          qtAIC3SIO99db3+nTfYFPTGryoSk1Pr8xMJTZHfPgW4jAP6ZkTqYXu07QoXo/FRI
+          pSsPHNjDCRbjyjcFnqkXXec=
+          -----END PRIVATE KEY-----
+
+    clients:
+      - client_id: 'test_client_id'
+        client_name: 'S3 OAuth2 Proxy'
+        client_secret: '$pbkdf2-sha512$310000$wqIIBfsnXuKpRQnOzr5gWg$fqAhSu18CY9MCk.64bjdVHQstQHi2le.lGBAv0AnS/xfRYm8sIODVAG4kGEiyM/HZngwIprui2dmlSjbwJaWIA' # 平文: client_secret
+        public: false
+        redirect_uris:
+          - 'http://localhost:8080/auth/callback'
+          - 'https://s3-oauth2-proxy.local.walnuts.dev/auth/callback'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+          - 'groups'
+        grant_types:
+          - 'authorization_code'
+        response_types:
+          - 'code'
+        authorization_policy: 'one_factor'
+        require_pkce: false

@@ -110,6 +110,37 @@ spec:
 
 Additionally, an example of using the MinIO Operator in an on-premises Kubernetes cluster can be found [here]([examples/minio-operator.yaml](https://github.com/walnuts1018/infra/blob/7642120ecb6f4b5dd415d85ea7bb5099fdcf4725/k8s/apps/ipu/deployment.yaml)).
 
+## Development
+
+### Certificate Issuance
+
+```bash
+make cert
+```
+
+### Startup
+
+```bash
+docker compose watch
+```
+
+### Terraform
+
+```bash
+terraform -chdir=terraform/local/ init
+terraform -chdir=terraform/local/ plan
+terraform -chdir=terraform/local/ apply
+```
+
+### Editing hosts
+
+Add the following to `/etc/hosts`:
+
+```bash
+127.0.0.1 s3-oauth2-proxy.local.walnuts.dev
+127.0.0.1 authelia.local.walnuts.dev
+```
+
 ## License
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

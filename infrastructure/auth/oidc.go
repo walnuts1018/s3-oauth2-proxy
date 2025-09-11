@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/walnuts1018/s3-oauth2-proxy/config"
@@ -56,18 +57,27 @@ func (r *authRepository) VerifyIDToken(ctx context.Context, token *oauth2.Token,
 		return "", errors.New("invalid nonce")
 	}
 
-	var claims map[string]interface{}
-	if err := idToken.Claims(&claims); err != nil {
+	userinfo, err := r.provider.UserInfo(ctx, oauth2.StaticTokenSource(token))
+	if err != nil {
 		return "", err
 	}
 
-	groupsClaim, ok := claims[r.cfg.GroupClaim].([]interface{})
+	if len(r.cfg.AllowedGroups) == 0 {
+		return idToken.Subject, nil
+	}
+
+	var claims map[string]any
+	if err := userinfo.Claims(&claims); err != nil {
+		return "", err
+	}
+
+	groupsClaim, ok := claims[r.cfg.GroupClaim].([]any)
 	if !ok {
 		return "", errors.New("group claim not found or not a list")
 	}
 
 	for _, group := range groupsClaim {
-		if groupStr, ok := group.(string); ok && groupStr == r.cfg.AllowedGroup {
+		if groupStr, ok := group.(string); ok && slices.Contains(r.cfg.AllowedGroups, groupStr) {
 			return idToken.Subject, nil
 		}
 	}
