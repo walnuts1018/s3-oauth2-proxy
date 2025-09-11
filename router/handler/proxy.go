@@ -21,6 +21,16 @@ func NewProxyHandler(proxyUsecase usecase.ProxyUsecase) *ProxyHandler {
 
 func (h *ProxyHandler) GetObject(c echo.Context) error {
 	if !isAuthenticated(c) {
+		slog.DebugContext(c.Request().Context(), "unauthenticated request, redirecting to login", "path", c.Request().URL.RequestURI())
+
+		if err := useAuthSession(c, func(values map[any]any) error {
+			values[sessionKeyReturnTo] = c.Request().URL.RequestURI()
+			return nil
+		}); err != nil {
+			slog.ErrorContext(c.Request().Context(), "failed to set return_to in session", "error", err)
+			return c.String(http.StatusInternalServerError, "Internal server error")
+		}
+
 		return c.Redirect(http.StatusFound, c.Echo().Reverse("auth.login"))
 	}
 

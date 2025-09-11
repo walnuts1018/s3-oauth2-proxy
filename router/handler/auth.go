@@ -3,19 +3,10 @@ package handler
 import (
 	"log/slog"
 	"net/http"
-	"time"
 
-	"github.com/gorilla/sessions"
-	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/walnuts1018/s3-oauth2-proxy/usecase"
 	"github.com/walnuts1018/s3-oauth2-proxy/util/random"
-)
-
-const (
-	sessionKeyState         = "state"
-	sessionKeyNonce         = "nonce"
-	sessionKeyAuthenticated = "authenticated"
 )
 
 type AuthHandler struct {
@@ -40,17 +31,12 @@ func (h *AuthHandler) Login(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
-	sess, _ := session.Get("session", c)
-	sess.Values[sessionKeyState] = state
-	sess.Values[sessionKeyNonce] = nonce
-	sess.Options = &sessions.Options{
-		MaxAge:   int(1 * time.Hour.Seconds()),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	}
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
-		slog.ErrorContext(c.Request().Context(), "failed to save session", "error", err)
+	if err := useAuthSession(c, func(values map[any]any) error {
+		values[sessionKeyState] = state
+		values[sessionKeyNonce] = nonce
+		return nil
+	}); err != nil {
+		slog.ErrorContext(c.Request().Context(), "failed to set state and nonce in session", "error", err)
 		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
@@ -58,43 +44,63 @@ func (h *AuthHandler) Login(c echo.Context) error {
 }
 
 func (h *AuthHandler) Callback(c echo.Context) error {
-	sess, _ := session.Get("session", c)
-	if c.QueryParam("state") != sess.Values[sessionKeyState] {
+	var expectedState string
+	var expectedNonce string
+	var returnTo string
+	if err := useAuthSession(c, func(values map[any]any) error {
+		expectedState, _ = values[sessionKeyState].(string)
+		expectedNonce, _ = values[sessionKeyNonce].(string)
+		returnTo, _ = values[sessionKeyReturnTo].(string)
+		delete(values, sessionKeyState)
+		delete(values, sessionKeyNonce)
+		delete(values, sessionKeyReturnTo)
+		return nil
+	}); err != nil {
+		slog.ErrorContext(c.Request().Context(), "failed to get state and nonce from session", "error", err)
+		return c.String(http.StatusInternalServerError, "Internal server error")
+	}
+
+	if c.QueryParam("state") != expectedState {
 		return c.String(http.StatusBadRequest, "invalid state")
 	}
 
-	expectedNonce, ok := sess.Values[sessionKeyNonce].(string)
-	if !ok {
-		return c.String(http.StatusInternalServerError, "nonce not found in session")
+	if returnTo == "" {
+		returnTo = "/"
 	}
 
-	_, err := h.authUsecase.Login(c.Request().Context(), c.QueryParam("code"), expectedNonce)
-	if err != nil {
+	if !isAcceptableRedirectURL(returnTo) {
+		returnTo = "/"
+	}
+
+	if _, err := h.authUsecase.Login(c.Request().Context(), c.QueryParam("code"), expectedNonce); err != nil {
 		slog.ErrorContext(c.Request().Context(), "failed to login", "error", err)
 		return c.String(http.StatusForbidden, "failed to login")
 	}
 
-	sess.Values[sessionKeyAuthenticated] = true
-	sess.Options = &sessions.Options{
-		MaxAge:   int(3 * 24 * time.Hour.Seconds()),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	}
-
-	if err := sess.Save(c.Request(), c.Response()); err != nil {
-		slog.ErrorContext(c.Request().Context(), "failed to save session", "error", err)
+	if err := useDefaultSession(c, func(values map[any]any) error {
+		values[sessionKeyAuthenticated] = true
+		return nil
+	}); err != nil {
+		slog.ErrorContext(c.Request().Context(), "failed to set authenticated in session", "error", err)
 		return c.String(http.StatusInternalServerError, "Internal server error")
 	}
 
-	return c.Redirect(http.StatusFound, "/")
+	return c.Redirect(http.StatusFound, returnTo)
 }
 
 func isAuthenticated(c echo.Context) bool {
-	sess, err := session.Get("session", c)
-	if err != nil {
+	var authStatus bool
+	if err := useDefaultSession(c, func(values map[any]any) error {
+		authStatus, _ = values[sessionKeyAuthenticated].(bool)
+		return nil
+	}); err != nil {
+		slog.ErrorContext(c.Request().Context(), "failed to initialize authenticated in session", "error", err)
 		return false
 	}
-	authStatus, ok := sess.Values[sessionKeyAuthenticated].(bool)
-	return ok && authStatus
+
+	return authStatus
+}
+
+func isAcceptableRedirectURL(url string) bool {
+	return len(url) > 0 && url[0] == '/'
 }
