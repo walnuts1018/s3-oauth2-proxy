@@ -93,7 +93,7 @@ services:
       - default
 
   authelia:
-    image: authelia/authelia:4.39.13
+    image: authelia/authelia:4.39.14
     ports:
       - "9091:9091"
     volumes:
