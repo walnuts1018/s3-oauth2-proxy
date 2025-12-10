@@ -46,7 +46,7 @@ services:
       start_period: 30s
 
   nginx:
-    image: nginx:1.29.3
+    image: nginx:1.29.4
     ports:
       - "80:80"
       - "443:443"
