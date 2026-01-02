@@ -111,7 +111,7 @@ services:
           path: ./authelia
 
   jaeger:
-    image: cr.jaegertracing.io/jaegertracing/jaeger:2.10.0
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.14.0
     ports:
       - "16686:16686" # Jaeger UI
     environment:
