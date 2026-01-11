@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/walnuts1018/s3-oauth2-proxy/domain/model"
 	"github.com/walnuts1018/s3-oauth2-proxy/domain/repository"
@@ -25,6 +26,9 @@ func NewProxyUsecase(s3Repo repository.S3Repository) ProxyUsecase {
 }
 
 func (u *proxyUsecase) GetObject(ctx context.Context, key string) (*model.S3Object, error) {
+	if strings.HasPrefix(key, "/") {
+		key = key[1:]
+	}
 	obj, err := u.s3Repo.GetObject(ctx, key)
 	if err != nil {
 		if errors.Is(err, repository.ErrObjectNotFound) {
