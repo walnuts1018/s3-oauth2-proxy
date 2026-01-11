@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	appConfig "github.com/walnuts1018/s3-oauth2-proxy/config"
 	"github.com/walnuts1018/s3-oauth2-proxy/infrastructure/auth"
@@ -43,7 +44,13 @@ func main() {
 	}
 	defer closeTracer()
 
-	awsCfg, err := awsconfig.LoadDefaultConfig(ctx)
+	opts := []func(*awsconfig.LoadOptions) error{}
+	if cfg.LogLevel == slog.LevelDebug {
+		opts = append(opts, awsconfig.WithClientLogMode(aws.LogSigning|aws.LogRequestWithBody))
+	}
+
+	awsCfg, err := awsconfig.LoadDefaultConfig(ctx, opts...)
+
 	if err != nil {
 		slog.ErrorContext(ctx, "Failed to load aws config", slog.String("error", err.Error()))
 		os.Exit(1)
