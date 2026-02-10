@@ -1,4 +1,4 @@
-FROM golang:1.25.7-bookworm AS builder
+FROM golang:1.26.0-bookworm AS builder
 ENV ROOT=/build
 ARG BUILD_TAGS=""
 RUN mkdir ${ROOT}
