@@ -1,6 +1,6 @@
 module github.com/walnuts1018/s3-oauth2-proxy
 
-go 1.25.1
+go 1.26.0
 
 tool (
 	github.com/air-verse/air
@@ -27,7 +27,7 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.38.0
 	go.opentelemetry.io/otel/sdk v1.38.0
 	go.uber.org/mock v0.6.0
-	golang.org/x/oauth2 v0.31.0
+	golang.org/x/oauth2 v0.37.0
 )
 
 require (
